@@ -8,6 +8,7 @@ import os, json, uuid, threading, logging
 from fastapi.responses import FileResponse
 import urllib.parse
 from urllib.parse import quote
+from urllib.parse import unquote
 
 from weather_downloader import WeatherDownloader, DownloadConfig
 from databases import RegionDatabase
@@ -170,19 +171,16 @@ async def get_downloaded_files():
 
 @app.get("/api/download-file/{file_path:path}")
 async def download_file(file_path: str):
-    full_path = os.path.join("downloads", file_path)
-    if not os.path.exists(full_path):
-        raise HTTPException(status_code=404, detail="File not found")
+    # ① URL 인코딩 해제
+    real_path = unquote(file_path)
 
-    filename = os.path.basename(full_path)
-    headers = {
-        # 모든 브라우저에서 한글 파일명까지 안전
-        "Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"
-    }
+    full = os.path.join("downloads", real_path)
+    if not os.path.exists(full):
+        raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(
-        full_path,
-        media_type="text/csv",   # 실제 타입 지정
-        headers=headers
+        full,
+        media_type="application/octet-stream",
+        filename=os.path.basename(full)
     )
 
 async def run_download(task_id: str, config: DownloadConfig):
@@ -220,26 +218,7 @@ async def run_download(task_id: str, config: DownloadConfig):
                 "status": "error",
                 "error": str(e)
             })
-            
-@app.get("/api/download-file/{file_path:path}")
-async def download_file(file_path: str):
-    full_path = os.path.join("downloads", file_path)
-    if not os.path.exists(full_path):
-        raise HTTPException(status_code=404, detail="File not found")
-
-    # 한글 파일명을 브라우저가 깨지지 않도록 RFC 5987 형식으로 인코딩
-    filename = os.path.basename(full_path)
-    encoded  = urllib.parse.quote(filename.encode('utf-8'))
-
-    return FileResponse(
-        full_path,
-        media_type="text/csv",
-        filename=filename,                 # FastAPI 0.110+ 이면 이것만으로도 OK
-        headers={
-            "Content-Disposition":
-            f"attachment; filename*=UTF-8''{encoded}"
-        }
-    )
+        
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
