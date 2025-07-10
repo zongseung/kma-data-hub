@@ -261,24 +261,20 @@ async function loadFiles() {
   }
 }
 
-// 12) 실제 파일 다운로드
 function downloadFile(path) {
-  /*
-    path 예:  단기예보/강원특별자치도/강릉시/사천면/1시간기온/...
-    - 한글·공백·특수문자 인코딩
-    - 폴더 구분 슬래시는 그대로 두기
-  */
-  const encoded = path.split('/').map(encodeURIComponent).join('/');
+  /* 1) 전체 경로를 encodeURIComponent
+       2) %2F → / (슬래시는 복구) */
+  const encoded = encodeURIComponent(path).replace(/%2F/g, "/");
 
-  const a = document.createElement('a');
-  a.href     = `/api/download-file/${encoded}`;
-  /* 백엔드에서 filename 헤더를 주므로 굳이 안 써도 되지만,
-     “다른 이름으로 저장” 기본값을 확실히 하려면 아래처럼 */
-  a.download = encoded.split('/').pop();   
+  // a 태그로 강제 다운로드
+  const a = document.createElement("a");
+  a.href = `/api/download-file/${encoded}`;
+  a.download = "";        // 브라우저에 “저장” 강제
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
 }
+
 // 13) 바이트 → 읽기 좋은 문자열
 function formatFileSize(bytes) {
   if (bytes === 0) return "0 Bytes";
