@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>기상 데이터 다운로더</title>
+  <link href="/static/style.css" rel="stylesheet" />
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    rel="stylesheet"
+  />
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1><i class="fas fa-cloud-sun"></i> 기상 데이터 다운로더</h1>
+      <p>기상청 동네예보 데이터를 쉽게 다운로드하세요</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-button active" data-tab="download" onclick="showTab('download')">
+        <i class="fas fa-download"></i> 다운로드
+      </button>
+      <button class="tab-button" data-tab="files" onclick="showTab('files')">
+        <i class="fas fa-folder"></i> 파일 관리
+      </button>
+    </div>
+
+    <!-- 다운로드 탭 -->
+    <div id="download-tab" class="tab-content active">
+        <form id="download-form" class="form">
+          <!-- 로그인 정보 섹션 -->
+          <div class="form-section">
+            <h3><i class="fas fa-user"></i> 로그인 정보</h3>
+            <div class="form-group">
+              <label for="login_id">기상청 계정 ID:</label>
+              <input type="text" id="login_id" name="login_id" required />
+            </div>
+            <div class="form-group">
+              <label for="password">비밀번호:</label>
+              <input type="password" id="password" name="password" required />
+            </div>
+          </div>
+  
+          <!-- 지역 검색 & 선택 -->
+          <div class="form-section">
+            <h3><i class="fas fa-map-marker-alt"></i> 지역 선택</h3>
+            <div class="form-group">
+              <label for="region-search">지역 검색:</label>
+              <input
+                type="text"
+                id="region-search"
+                placeholder="지역명을 입력하세요 (예: 서울)"
+              />
+            </div>
+  
+            <div class="region-container">
+              <!-- 좌측: 검색 결과 -->
+              <div id="region-list"></div>
+              <!-- 우측: 선택된 지역 -->
+              <div id="selected-regions">
+                <h4>선택된 지역:</h4>
+              </div>
+            </div>
+          </div>
+        <!-- 예보 설정 -->
+        <div class="form-section">
+          <h3><i class="fas fa-cog"></i> 예보 설정</h3>
+          <div class="form-group">
+            <label for="config-select">예보 유형:</label>
+            <select id="config-select" name="config_name" required>
+              <option value="">선택하세요</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>기상 변수:</label>
+            <div id="variables-container" class="variables-grid"></div>
+          </div>
+        </div>
+
+        <!-- 기간 설정 -->
+        <div class="form-section">
+          <h3><i class="fas fa-calendar"></i> 기간 설정</h3>
+          <div class="date-range">
+            <div class="form-group">
+              <label for="start_date">시작일:</label>
+              <input type="date" id="start_date" name="start_date" required>
+            </div>
+            <div class="form-group">
+              <label for="end_date">종료일:</label>
+              <input type="date" id="end_date" name="end_date" required>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary">
+          <i class="fas fa-download"></i> 다운로드 시작
+        </button>
+      </form>
+
+      <!-- 진행상황 표시 -->
+      <div id="progress-container" class="progress-container" style="display: none;">
+        <h3>다운로드 진행상황</h3>
+        <div class="progress-bar">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+        <div id="progress-text" class="progress-text">준비 중...</div>
+        <div id="progress-details" class="progress-details"></div>
+        <button id="cancel-download" class="btn-secondary">취소</button>
+      </div>
+    </div>
+
+    <!-- 파일 관리 탭 -->
+    <div id="files-tab" class="tab-content">
+      <div class="files-header">
+        <h3><i class="fas fa-folder"></i> 다운로드된 파일</h3>
+        <button id="refresh-files" class="btn-secondary">
+          <i class="fas fa-sync"></i> 새로고침
+        </button>
+      </div>
+      <div id="files-list" class="files-grid"></div>
+    </div>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
