@@ -12,13 +12,12 @@ daily/
 
 # 인증 관련
 *.pem
-# *.dbKma-data-crawling-Webpage/
+
 bin/
 lib/
 lib64/
 share/
 *.tar.gz
-Kma-data-crawling-Webpage/
 https:/
 lib64/
 pyvenv.cfg
