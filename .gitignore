@@ -1,0 +1,26 @@
+.env
+config.yaml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 데이터/로그
+daily/
+*.log
+
+# 인증 관련
+*.pem
+*.dbKma-data-crawling-Webpage/
+bin/
+lib/
+lib64/
+share/
+*.tar.gz
+Kma-data-crawling-Webpage/
+https:/
+lib64/
+pyvenv.cfg
+test (1)/
+*.csv
