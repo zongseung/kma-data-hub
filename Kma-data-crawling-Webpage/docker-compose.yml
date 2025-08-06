@@ -1,0 +1,16 @@
+services:
+  weather-downloader:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./downloads:/app/downloads
+      - ./static:/app/static
+      - ./templates:/app/templates
+    environment:
+      - PYTHONPATH=/app
+      - DB_PATH=/app/data/local_codes.db
+      # 여기에 ASOS_SERVICE_KEY를 넣어 주세요.
+      - ASOS_SERVICE_KEY=iCNxo2r0TdZnnV63/ItO+QrOUqJakXCxx/m20BsCp53DGZzJMDd1/7jOGLYQE+Sn+1EQeSeIhUsTIyQ5dYgy4Q==
+    restart: always

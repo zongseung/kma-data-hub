@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>기상 데이터 다운로더</title>
+  <link href="/static/style.css" rel="stylesheet" />
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    rel="stylesheet"
+  />
+  <!-- 슬롯 CSS -->
+  <style>
+    .slot-selector { display: flex; gap: 8px; margin: 16px 0; }
+    .slot-button { padding: 8px 12px; border: 1px solid #ccc; background: #f9f9f9; cursor: pointer; }
+    .slot-button.active { background: #007bff; color: #fff; border-color: #007bff; }
+    .slot-content { display: none; }
+    .slot-content.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1><i class="fas fa-cloud-sun"></i> MeteoHub Korea</h1>
+      <p>🌤️ 기상청 데이터를 쉽고 빠르게 다운로드하세요</p>
+    </header>
+
+    <!-- 탭 버튼 -->
+    <div class="tabs">
+      <button class="tab-button active" data-tab="login" onclick="showTab('login')">
+        <i class="fas fa-sign-in-alt"></i> 로그인
+      </button>
+      <button class="tab-button" data-tab="download" onclick="showTab('download')">
+        <i class="fas fa-download"></i> 다운로드
+      </button>
+      <button class="tab-button" data-tab="files" onclick="showTab('files')">
+        <i class="fas fa-folder"></i> 파일 관리
+      </button>
+    </div>
+
+    <!-- 로그인 탭 -->
+    <div id="login-tab" class="tab-content active">
+      <form id="login-form" class="form">
+        <h2><i class="fas fa-user"></i> 로그인</h2>
+        <div class="form-group">
+          <label for="login-username">아이디:</label>
+          <input type="text" id="login-username" autocomplete="username" required />
+        </div>
+        <div class="form-group">
+          <label for="login-password">비밀번호:</label>
+          <input type="password" id="login-password" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="btn-primary">
+          <i class="fas fa-sign-in-alt"></i> 로그인
+        </button>
+      </form>
+    </div>
+
+    <!-- 다운로드 탭 -->
+    <div id="download-tab" class="tab-content">
+      <!-- 슬롯 선택 -->
+      <div class="slot-selector">
+        <button type="button" class="slot-button active" data-slot="shortterm">단기예보 데이터</button>
+        <button type="button" class="slot-button" data-slot="asos">ASOS 데이터</button>
+        <button type="button" class="slot-button" data-slot="aws">AWS 데이터</button>
+      </div>
+
+      <!-- 1) 단기예보 슬롯 -->
+      <div id="slot-shortterm" class="slot-content active">
+        <form id="download-form" class="form">
+          <!-- KMA 계정 정보 -->
+          <div class="form-section">
+            <h3><i class="fas fa-key"></i> KMA 계정 정보</h3>
+            <div class="form-group">
+              <label for="login_id">기상청 계정 ID:</label>
+              <input type="text" id="login_id" name="login_id" required />
+            </div>
+            <div class="form-group">
+              <label for="password">비밀번호:</label>
+              <input type="password" id="password" name="password" required />
+            </div>
+          </div>
+
+          <!-- 지역 선택 -->
+          <div class="form-section">
+            <h3><i class="fas fa-map-marker-alt"></i> 지역 선택</h3>
+            <div class="form-group">
+              <label for="region-search">지역 검색:</label>
+              <input type="text" id="region-search" placeholder="지역명을 입력하세요 (예: 서울)" />
+            </div>
+            <div class="region-container">
+              <div id="region-list"></div>
+              <div id="selected-regions">
+                <h4>선택된 지역:</h4>
+              </div>
+            </div>
+          </div>
+
+          <!-- 예보 설정 -->
+          <div class="form-section">
+            <h3><i class="fas fa-cog"></i> 예보 설정</h3>
+            <div class="form-group">
+              <label for="config-select">예보 유형:</label>
+              <select id="config-select" name="config_name" required>
+                <option value="">선택하세요</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>기상 변수:</label>
+              <div id="variables-container" class="variables-grid"></div>
+            </div>
+          </div>
+
+          <!-- 기간 설정 -->
+          <div class="form-section">
+            <h3><i class="fas fa-calendar"></i> 기간 설정</h3>
+            <div class="date-range">
+              <div class="form-group">
+                <label for="start_date">시작일:</label>
+                <input type="date" id="start_date" name="start_date" required />
+              </div>
+              <div class="form-group">
+                <label for="end_date">종료일:</label>
+                <input type="date" id="end_date" name="end_date" required />
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-download"></i> 다운로드 시작
+          </button>
+        </form>
+
+        <!-- 진행상황 표시 -->
+        <div id="progress-container" class="progress-container" style="display: none;">
+          <h3>다운로드 진행상황</h3>
+          <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+          <div id="progress-text" class="progress-text">준비 중...</div>
+          <div id="progress-details" class="progress-details"></div>
+          <button id="cancel-download" class="btn-secondary">취소</button>
+        </div>
+      </div>
+
+      <!-- 2) ASOS 슬롯 -->
+      <!-- 1) HTML: API 키 필드 추가 -->
+      <div id="slot-asos" class="slot-content">
+        <form id="asos-form" class="form">
+          <h3><i class="fas fa-cloud"></i> ASOS(종관기상) 관측 데이터</h3>
+
+          <!-- ★ API 키 입력란 -->
+          <div class="form-group">
+            <label for="asos-service-key">API 키:</label>
+            <input
+              type="text"
+              id="asos-service-key"
+              placeholder="발급받은 키를 입력하세요 (Decoding 된 값을 넣어주세요)"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="asos-start-date">시작일:</label>
+            <input type="date" id="asos-start-date" required />
+          </div>
+          <div class="form-group">
+            <label for="asos-end-date">종료일:</label>
+            <input type="date" id="asos-end-date" required />
+          </div>
+
+          <div class="form-group">
+            <label for="asos-region">관측소 (복수 선택 가능):</label>
+            <select id="asos-region" multiple size="8" required style="min-width:200px;">
+              <!-- JS 로 옵션 채움 -->
+            </select>
+            <small>Ctrl/Shift+클릭으로 복수 선택</small>
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-download"></i> ASOS 다운로드
+          </button>
+        </form>
+
+        <progress id="download-progress"
+                  value="0"
+                  max="100"
+                  style="width:100%; display:none;">
+        </progress>
+        <div id="download-status"
+            style="margin-top:8px; font-size:0.9em;">
+        </div>
+      </div>
+
+      <!-- 3) AWS 슬롯 -->
+      <div id="slot-aws" class="slot-content">
+        <form id="aws-form" class="form">
+          <h3><i class="fas fa-cloud-rain"></i> AWS(방재기상) 관측 데이터</h3>
+          <div class="form-group">
+            <label for="aws-date">날짜:</label>
+            <input type="date" id="aws-date" required />
+          </div>
+          <div class="form-group">
+            <label for="aws-station">관측소:</label>
+            <select id="aws-station" required>
+              <!-- options 채워짐 -->
+            </select>
+          </div>
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-download"></i> AWS 조회
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 파일 관리 탭 -->
+    <!<div id="files-tab" class="tab-content">
+      <div class="files-header">
+        <h3><i class="fas fa-folder"></i> 다운로드된 파일</h3>
+        <button id="refresh-files" class="btn-secondary">
+          <i class="fas fa-sync"></i> 새로고침
+        </button>
+      </div>
+      <div id="files-list" class="files-grid"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="/static/script.js?v=6"></script>
+</body>
+</html>
